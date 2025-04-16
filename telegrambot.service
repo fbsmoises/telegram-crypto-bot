@@ -1,0 +1,17 @@
+[Unit]
+Description=Telegram Bot para Monitoramento Financeiro
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/telegram_bot
+ExecStart=/bin/bash /home/ubuntu/telegram_bot/run_bot.sh
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=telegrambot
+
+[Install]
+WantedBy=multi-user.target
