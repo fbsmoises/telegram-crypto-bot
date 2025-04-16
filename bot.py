@@ -18,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Token do bot fornecido pelo usuário
-TOKEN = "7939454359:AAG8eKjgg2xDZ1AIZByQp2QHN_jnK5WV-Y8"
+TOKEN = "7939454359:AAHra2ulrRIAKImfVlxEr-9dF4ianWwvII0"
 
 # Diretório para armazenar dados
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
