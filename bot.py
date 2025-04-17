@@ -18,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Token do bot fornecido pelo usuário
-TOKEN = "7939454359:AAHra2ulrRIAKImfVlxEr-9dF4ianWwvII0"
+TOKEN = "7939454359:AAG8eKjgg2xDZ1AIZByQp2QHN_jnK5WV-Y8"
 
 # Diretório para armazenar dados
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -59,7 +59,7 @@ def save_user(chat_id, username=None, first_name=None):
         "chat_id": chat_id,
         "username": username,
         "first_name": first_name,
-        "registered_at": str(asyncio.get_event_loop().time())
+        "registered_at": datetime.now().isoformat()
     })
     
     # Salva a lista atualizada
@@ -305,8 +305,8 @@ class EnhancedPriceScheduler(PriceScheduler):
         
         return data
 
-def main():
-    """Inicia o bot."""
+async def run_bot():
+    """Função para executar o bot do Telegram."""
     global scheduler
     
     # Importações dentro da função para evitar problemas de circular import
@@ -334,11 +334,50 @@ def main():
     # Inicializa o agendador com a aplicação
     scheduler = EnhancedPriceScheduler(application.bot, [user["chat_id"] for user in load_users()])
     
-    # Inicia o monitoramento em background
-    asyncio.create_task(scheduler.start_monitoring())
-    
     # Inicia o bot
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    await application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+async def run_price_monitor():
+    """Função para executar o monitoramento de preços."""
+    global scheduler
+    
+    # Inicializa o agendador sem bot (apenas para monitoramento)
+    scheduler = EnhancedPriceScheduler()
+    
+    # Inicia o monitoramento
+    await scheduler.start_monitoring()
+
+def main():
+    """Função principal que decide qual modo executar."""
+    import sys
+    
+    # Verifica se há argumentos de linha de comando
+    if len(sys.argv) > 1 and sys.argv[1] == "--monitor-only":
+        print("Iniciando apenas o monitoramento de preços (sem bot do Telegram)...")
+        asyncio.run(run_price_monitor())
+    else:
+        print("Iniciando o bot do Telegram com monitoramento de preços...")
+        try:
+            # Executa o monitoramento em uma thread separada
+            import threading
+            
+            def run_async_monitoring():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(run_price_monitor())
+                
+            # Inicia o monitoramento em uma thread separada
+            monitoring_thread = threading.Thread(target=run_async_monitoring)
+            monitoring_thread.daemon = True  # Thread será encerrada quando o programa principal terminar
+            monitoring_thread.start()
+            
+            # Executa o bot na thread principal
+            asyncio.run(run_bot())
+            
+        except KeyboardInterrupt:
+            print("Bot encerrado pelo usuário.")
+        except Exception as e:
+            print(f"Erro ao executar o bot: {e}")
 
 if __name__ == '__main__':
     main()
